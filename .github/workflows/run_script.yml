@@ -11,29 +11,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set Up Python Environment
+      # Step 2: Set up Python environment
+      - name: Set Up Python
         uses: actions/setup-python@v3
         with:
           python-version: "3.9"
 
-      - name: Install Dependencies
+      # Step 3: Install dependencies
+      - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run Python Script
-        id: run_script
+      # Step 4: Run the Python script
+      - name: Execute Python Script
+        id: execute_script
         run: |
-          echo "Running ${{ inputs.scriptName }}"
+          echo "Running script ${{ inputs.scriptName }}"
           output=$(python scripts/${{ inputs.scriptName }})
           echo $output
 
-      - name: Send Output to Server Webhook
-        if: always() # Ensure this step runs even if the script fails
+      # Step 5: Send script output to the API server via webhook
+      - name: Send Output to Webhook
+        if: always() # Run this step regardless of workflow success or failure
         run: |
+          json_output=$(python scripts/${{ inputs.scriptName }} | jq -R -s)
           curl -X POST "https://9rlvvbg3-3000.inc1.devtunnels.ms/api/webhook" \
                -H "Content-Type: application/json" \
-               -d "{\"status\":\"success\", \"data\":\"$output\"}"
+               -d "{\"status\": \"success\", \"script\": \"${{ inputs.scriptName }}\", \"output\": $json_output}"
