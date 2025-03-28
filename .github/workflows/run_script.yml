@@ -5,41 +5,44 @@ on:
       scriptName:
         description: "Name of the script to execute"
         required: true
+      requestId: # Add requestId input to accept unique identifiers
+        description: "Unique requestId for API tracking"
+        required: true
 
 jobs:
-  run-script:
+  execute-script:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout repository containing the Python scripts
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Python environment
-      - name: Set Up Python
+      # Step 2: Setup Python
+      - name: Set Up Python Environment
         uses: actions/setup-python@v3
         with:
           python-version: "3.9"
 
       # Step 3: Install dependencies
-      - name: Install Python Dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      # Step 4: Run the Python script
-      - name: Execute Python Script
+      # Step 4: Run Python Script
+      - name: Execute Script
         id: execute_script
         run: |
           echo "Running script ${{ inputs.scriptName }}"
           output=$(python scripts/${{ inputs.scriptName }})
           echo $output
 
-      # Step 5: Send script output to the API server via webhook
+      # Step 5: Send output to webhook
       - name: Send Output to Webhook
-        if: always() # Run this step regardless of workflow success or failure
+        if: always() # Run this step whether workflow succeeds or fails
         run: |
           json_output=$(python scripts/${{ inputs.scriptName }} | jq -R -s)
           curl -X POST "https://9rlvvbg3-3000.inc1.devtunnels.ms/api/webhook" \
                -H "Content-Type: application/json" \
-               -d "{\"status\": \"success\", \"script\": \"${{ inputs.scriptName }}\", \"output\": $json_output}"
+               -d "{\"requestId\": \"${{ inputs.requestId }}\", \"status\": \"success\", \"script\": \"${{ inputs.scriptName }}\", \"output\": $json_output}"
