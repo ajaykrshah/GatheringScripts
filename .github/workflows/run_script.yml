@@ -8,6 +8,9 @@ on:
       requestId: # Add requestId input to accept unique identifiers
         description: "Unique requestId for API tracking"
         required: true
+      requestURL: # Request URL
+        description: "RequestURL for API"
+        required: true
 
 jobs:
   execute-script:
@@ -43,6 +46,6 @@ jobs:
         if: always() # Run this step whether workflow succeeds or fails
         run: |
           json_output=$(python scripts/${{ inputs.scriptName }} | jq -R -s)
-          curl -X POST "https://9rlvvbg3-3000.inc1.devtunnels.ms/api/webhook" \
+          curl -X POST "${{ inputs.requestURL }}/api/webhook" \
                -H "Content-Type: application/json" \
                -d "{\"requestId\": \"${{ inputs.requestId }}\", \"status\": \"success\", \"script\": \"${{ inputs.scriptName }}\", \"output\": $json_output}"
